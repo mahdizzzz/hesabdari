@@ -14,9 +14,6 @@
     <!-- Persian Font: Vazirmatn -->
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Persian Date Picker: Kamadatepicker -->
-    <link href="https://cdn.jsdelivr.net/npm/kamadatepicker/dist/kamadatepicker.min.css" rel="stylesheet">
-    
     <style>
         body {
             font-family: 'Vazirmatn', sans-serif;
@@ -104,13 +101,13 @@
                                 <button type="button" id="expense-btn" class="expense-btn">هزینه</button>
                             </div>
                         </div>
-                         <div>
+                         <div id="category-wrapper">
                             <label for="category" class="block mb-2 font-semibold text-gray-700">دسته‌بندی</label>
                             <select id="category" class="form-input"></select>
                         </div>
                         <div>
                             <label for="description" class="block mb-2 font-semibold text-gray-700">شرح تراکنش</label>
-                            <input type="text" id="description" class="form-input" placeholder="مثال: تعویض ال‌سی‌دی آیفون ۱۳" required>
+                            <input type="text" id="description" class="form-input" placeholder="شرح (اختیاری)">
                         </div>
                         <div>
                             <label for="amount" class="block mb-2 font-semibold text-gray-700">مبلغ (تومان)</label>
@@ -118,7 +115,7 @@
                         </div>
                         <div>
                             <label for="date-picker" class="block mb-2 font-semibold text-gray-700">تاریخ</label>
-                            <input type="text" id="date-picker" class="form-input" autocomplete="off">
+                            <input type="date" id="date-picker" class="form-input">
                         </div>
                         <div class="flex gap-2">
                             <button type="submit" id="submit-btn" class="btn btn-primary w-full">افزودن</button>
@@ -156,7 +153,6 @@
         </div>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/kamadatepicker/dist/kamadatepicker.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // DOM Elements
@@ -172,6 +168,7 @@
             const chartCanvas = document.getElementById('myChart');
             const incomeBtn = document.getElementById('income-btn');
             const expenseBtn = document.getElementById('expense-btn');
+            const categoryWrapper = document.getElementById('category-wrapper');
             const categorySelect = document.getElementById('category');
             const transactionIdInput = document.getElementById('transaction-id');
             const submitBtn = document.getElementById('submit-btn');
@@ -184,17 +181,27 @@
             let selectedType = 'income';
             let editMode = false;
             
-            const incomeCategories = ['تعمیرات نرم‌افزاری', 'تعویض قطعه', 'فروش لوازم جانبی', 'سایر درآمدها'];
-            const expenseCategories = ['خرید قطعات', 'اجاره مغازه', 'قبوض', 'هزینه تبلیغات', 'ایاب و ذهاب', 'سایر هزینه‌ها'];
+            const incomeCategories = ['فلش', 'فیلترشکن', 'اینستاگرام', 'اپل آیدی', 'همکار', 'سایر'];
+            const expenseCategories = ['خوراک', 'پوشاک', 'قهوه', 'قسط', 'سایر'];
 
             // --- UTILITY FUNCTIONS ---
             const formatCurrency = (num) => new Intl.NumberFormat('fa-IR').format(num) + ' تومان';
-            const toPersianDate = (dateStr) => new Date(dateStr).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' });
+            const toPersianDate = (dateStr) => {
+                if (!dateStr) return '';
+                return new Date(dateStr).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' });
+            };
+            const getTodayDateString = () => {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
             
             // --- CATEGORY & TYPE HANDLING ---
-            const updateCategoryOptions = () => {
+            const updateCategoryOptions = (type) => {
                 categorySelect.innerHTML = '';
-                const categories = selectedType === 'income' ? incomeCategories : expenseCategories;
+                const categories = type === 'income' ? incomeCategories : expenseCategories;
                 categories.forEach(cat => {
                     const option = document.createElement('option');
                     option.value = cat;
@@ -207,7 +214,9 @@
                 selectedType = type;
                 incomeBtn.classList.toggle('active', type === 'income');
                 expenseBtn.classList.toggle('active', type === 'expense');
-                updateCategoryOptions();
+                
+                categoryWrapper.style.display = 'block';
+                updateCategoryOptions(type);
             };
 
             // --- UI & RENDER FUNCTIONS ---
@@ -222,11 +231,16 @@
                         const item = document.createElement('div');
                         const amountClass = t.type === 'income' ? 'income' : 'expense';
                         const sign = t.type === 'income' ? '+' : '-';
+                        const categoryHTML = t.category ? `<p class="text-sm text-gray-500">${t.category}</p>` : '';
+                        
+                        // If description is empty, use the category as the main text
+                        const mainDescription = t.description || t.category;
+
                         item.className = `flex items-center p-3 rounded-lg ${t.type === 'income' ? 'bg-green-50' : 'bg-red-50'}`;
                         item.innerHTML = `
                             <div class="flex-grow">
-                                <p class="font-semibold text-gray-800">${t.description}</p>
-                                <p class="text-sm text-gray-500">${t.category}</p>
+                                <p class="font-semibold text-gray-800">${mainDescription}</p>
+                                ${t.description ? categoryHTML : ''}
                             </div>
                             <div class="text-left ml-4">
                                 <p class="text-md ${amountClass} font-bold">${sign}${formatCurrency(t.amount)}</p>
@@ -306,10 +320,15 @@
             // --- CRUD & FORM LOGIC ---
             const handleFormSubmit = (e) => {
                 e.preventDefault();
-                if (descriptionInput.value.trim() === '' || amountInput.value.trim() === '') return;
+                if (amountInput.value.trim() === '') {
+                    amountInput.focus();
+                    amountInput.style.borderColor = '#ef4444';
+                    return;
+                }
+                amountInput.style.borderColor = '#d1d5db';
 
                 const transactionData = {
-                    description: descriptionInput.value,
+                    description: descriptionInput.value.trim(),
                     amount: +amountInput.value,
                     type: selectedType,
                     category: categorySelect.value,
@@ -344,7 +363,6 @@
                 descriptionInput.value = transaction.description;
                 amountInput.value = transaction.amount;
                 datePickerEl.value = transaction.date;
-                window.kamadatepicker.sync(); // Sync date picker UI
                 
                 setTransactionType(transaction.type);
                 categorySelect.value = transaction.category;
@@ -362,8 +380,8 @@
                 formTitle.textContent = 'ثبت تراکنش جدید';
                 submitBtn.textContent = 'افزودن';
                 cancelBtn.classList.add('hidden');
-                setTransactionType('income'); // Reset to default
-                datePickerEl.value = window.kamadatepicker.getValue('Y-m-d'); // Reset date to today
+                setTransactionType('income');
+                datePickerEl.value = getTodayDateString();
             };
 
             window.deleteTransaction = (id) => {
@@ -379,27 +397,25 @@
             };
 
             // --- INITIALIZATION ---
-            // Initialize Date Picker
-            window.kamadatepicker = kamadatepicker('date-picker', {
-                buttonsColor: "blue",
-                forceFarsiDigits: true,
-                gotoToday: true,
-                // When date changes, re-render the list
-                onclose: () => renderTransactions(datePickerEl.value)
-            });
-            
-            // Set the input's value to today right after initialization
-            datePickerEl.value = window.kamadatepicker.getValue('Y-m-d');
+            const init = () => {
+                datePickerEl.value = getTodayDateString();
 
-            // Set up event listeners
-            transactionForm.addEventListener('submit', handleFormSubmit);
-            incomeBtn.addEventListener('click', () => setTransactionType('income'));
-            expenseBtn.addEventListener('click', () => setTransactionType('expense'));
-            cancelBtn.addEventListener('click', resetForm);
-            
-            // Initial render
-            setTransactionType('income');
-            renderTransactions(datePickerEl.value);
+                transactionForm.addEventListener('submit', handleFormSubmit);
+                incomeBtn.addEventListener('click', () => setTransactionType('income'));
+                expenseBtn.addEventListener('click', () => setTransactionType('expense'));
+                cancelBtn.addEventListener('click', resetForm);
+                datePickerEl.addEventListener('change', (e) => renderTransactions(e.target.value));
+                categorySelect.addEventListener('change', (e) => {
+                    if (selectedType === 'expense' && e.target.value === 'قهوه') {
+                        amountInput.value = 50000;
+                    }
+                });
+                
+                setTransactionType('income');
+                renderTransactions(datePickerEl.value);
+            };
+
+            init();
         });
     </script>
 </body>
