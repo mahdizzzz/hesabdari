@@ -106,7 +106,6 @@
                         <input type="hidden" id="transaction-id">
                         <div>
                             <label for="date-picker" class="block mb-2 font-semibold text-gray-700">تاریخ</label>
-                            <!-- Changed to native date picker -->
                             <input type="date" id="date-picker" class="form-input" autocomplete="off">
                         </div>
                         <div>
@@ -153,6 +152,16 @@
                         <p class="text-gray-500 text-sm">هنوز روزی ثبت نشده است.</p>
                     </div>
                 </div>
+
+                <!-- Import/Export Card -->
+                <div class="card">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">مدیریت داده‌ها</h2>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button id="export-btn" class="btn btn-primary w-full">خروجی گرفتن (JSON)</button>
+                        <button id="import-btn" class="btn btn-secondary w-full">ورود داده‌ها (JSON)</button>
+                        <input type="file" id="import-file-input" class="hidden" accept=".json">
+                    </div>
+                </div>
             </div>
 
             <div class="lg:col-span-2 space-y-8">
@@ -194,6 +203,9 @@
             const cancelBtn = document.getElementById('cancel-btn');
             const summaryDateDisplay = document.getElementById('summary-date-display');
             const recordedDaysList = document.getElementById('recorded-days-list');
+            const exportBtn = document.getElementById('export-btn');
+            const importBtn = document.getElementById('import-btn');
+            const importFileInput = document.getElementById('import-file-input');
 
             // App State
             let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
@@ -207,10 +219,8 @@
             // --- UTILITY FUNCTIONS ---
             const formatCurrency = (num) => new Intl.NumberFormat('fa-IR').format(num) + ' تومان';
             
-            // Changed to format Gregorian dates
             const formatDate = (dateStr, options = { year: 'numeric', month: 'long', day: 'numeric' }) => {
                 if (!dateStr) return '';
-                // The input date string is 'YYYY-MM-DD'. To avoid timezone issues, split and create new Date.
                 const [year, month, day] = dateStr.split('-').map(Number);
                 return new Date(year, month - 1, day).toLocaleDateString('en-US', options);
             };
@@ -450,26 +460,73 @@
                 localStorage.setItem('transactions', JSON.stringify(transactions));
             };
 
+            // --- IMPORT/EXPORT LOGIC ---
+            const handleExport = () => {
+                if (transactions.length === 0) {
+                    alert('داده‌ای برای خروجی گرفتن وجود ندارد.');
+                    return;
+                }
+                const dataStr = JSON.stringify(transactions, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `financial_data_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            };
+
+            const handleImport = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedTransactions = JSON.parse(e.target.result);
+                        if (!Array.isArray(importedTransactions)) {
+                            throw new Error('فایل معتبر نیست. باید شامل یک آرایه باشد.');
+                        }
+                        if (confirm('هشدار: با این کار تمام داده‌های فعلی شما پاک شده و داده‌های جدید جایگزین می‌شوند. آیا ادامه می‌دهید؟')) {
+                            transactions = importedTransactions;
+                            saveToLocalStorage();
+                            datePickerEl.value = getTodayDateString();
+                            renderForDate(datePickerEl.value);
+                            alert('داده‌ها با موفقیت وارد شدند.');
+                        }
+                    } catch (error) {
+                        alert(`خطا در ورود داده‌ها: ${error.message}`);
+                    } finally {
+                        event.target.value = null;
+                    }
+                };
+                reader.onerror = () => {
+                    alert('خطا در خواندن فایل.');
+                };
+                reader.readAsText(file);
+            };
+
             // --- INITIALIZATION ---
             const init = () => {
-                // Set initial date
                 datePickerEl.value = getTodayDateString();
 
-                // Add event listeners
                 transactionForm.addEventListener('submit', handleFormSubmit);
                 incomeBtn.addEventListener('click', () => setTransactionType('income'));
                 expenseBtn.addEventListener('click', () => setTransactionType('expense'));
                 cancelBtn.addEventListener('click', resetForm);
-                datePickerEl.addEventListener('change', () => {
-                    renderForDate(datePickerEl.value);
-                });
+                datePickerEl.addEventListener('change', () => renderForDate(datePickerEl.value));
                 categorySelect.addEventListener('change', (e) => {
                     if (selectedType === 'expense' && e.target.value === 'قهوه') {
                         amountInput.value = 50000;
                     }
                 });
                 
-                // Initial render
+                exportBtn.addEventListener('click', handleExport);
+                importBtn.addEventListener('click', () => importFileInput.click());
+                importFileInput.addEventListener('change', handleImport);
+                
                 setTransactionType('income');
                 renderForDate(datePickerEl.value);
             };
