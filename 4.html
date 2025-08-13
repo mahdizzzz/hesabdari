@@ -3,472 +3,404 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>برنامه حسابداری آنلاین همکاران</title>
+    <title>مدیریت مالی شخصی</title>
     
-    <!-- Tailwind CSS for styling -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Persian Datepicker library and its dependency (jQuery) -->
-    <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css"/>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
-    <script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
-
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Persian Font: Vazirmatn -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Persian Date Picker: Kamadatepicker -->
+    <link href="https://cdn.jsdelivr.net/npm/kamadatepicker/dist/kamadatepicker.min.css" rel="stylesheet">
+    
     <style>
-        /* Custom styles for better Persian font rendering */
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
         body {
             font-family: 'Vazirmatn', sans-serif;
             background-color: #f3f4f6;
         }
-        .main-container {
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 2rem;
+        .card {
             background-color: white;
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        .partner-card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-        .partner-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .form-input, .form-select {
-            border-radius: 0.5rem;
-            border: 1px solid #d1d5db;
-            padding: 0.75rem 1rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 24px;
         }
         .btn {
-            border-radius: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            font-weight: bold;
-            transition: background-color 0.2s, opacity 0.2s;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
             cursor: pointer;
         }
-        .btn-sm {
-            padding: 0.25rem 0.75rem;
-            font-size: 0.875rem;
+        .btn-primary { background-color: #3b82f6; color: white; }
+        .btn-primary:hover { background-color: #2563eb; }
+        .btn-secondary { background-color: #6b7280; color: white; }
+        .btn-secondary:hover { background-color: #4b5563; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-edit { background-color: #f97316; color: white; }
+        .btn-edit:hover { background-color: #ea580c; }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            transition: border-color 0.2s;
         }
-        .btn-primary {
-            background-color: #3b82f6;
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+        }
+        .income { color: #16a34a; }
+        .expense { color: #dc2626; }
+
+        .type-toggle {
+            display: flex;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .type-toggle button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background-color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+        .type-toggle button.active {
             color: white;
         }
-        .btn-primary:hover {
-            background-color: #2563eb;
-        }
-        .btn-secondary {
-            background-color: #6b7280;
-            color: white;
-        }
-        .btn-secondary:hover {
-            background-color: #4b5563;
-        }
-        .btn-info {
-            background-color: #0ea5e9;
-            color: white;
-        }
-        .btn-info:hover {
-            background-color: #0284c7;
-        }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 2rem auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .type-toggle button.active.income-btn { background-color: #22c55e; }
+        .type-toggle button.active.expense-btn { background-color: #ef4444; }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="antialiased">
 
-    <div id="app-container" class="main-container">
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         
-        <div id="loading-spinner" class="text-center py-10">
-            <div class="loader"></div>
-            <p class="text-gray-600">در حال اتصال به سرور...</p>
-        </div>
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">مدیریت مالی شخصی</h1>
+            <p class="text-gray-500 mt-2">درآمد و هزینه‌های روزانه خود را به سادگی ثبت و تحلیل کنید.</p>
+        </header>
 
-        <!-- Main Page: Partner Selection -->
-        <div id="main-page" class="hidden">
-            <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">انتخاب همکار</h1>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div data-name="کاخ موبایل" data-key="kakh_mobile" class="partner-card bg-blue-500 text-white p-8 rounded-lg text-center cursor-pointer"><h2 class="text-2xl font-bold">کاخ موبایل</h2></div>
-                <div data-name="بانک موبایل شهر" data-key="bank_mobile_shahr" class="partner-card bg-green-500 text-white p-8 rounded-lg text-center cursor-pointer"><h2 class="text-2xl font-bold">بانک موبایل شهر</h2></div>
-                <div data-name="سینا موبایل" data-key="sina_mobile" class="partner-card bg-purple-500 text-white p-8 rounded-lg text-center cursor-pointer"><h2 class="text-2xl font-bold">سینا موبایل</h2></div>
-            </div>
-        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1 space-y-8">
+                <div class="card">
+                    <h2 id="form-title" class="text-xl font-bold mb-4 border-b pb-2">ثبت تراکنش جدید</h2>
+                    <form id="transaction-form" class="space-y-4">
+                        <input type="hidden" id="transaction-id">
+                        <div>
+                            <label class="block mb-2 font-semibold text-gray-700">نوع تراکنش</label>
+                            <div class="type-toggle">
+                                <button type="button" id="income-btn" class="income-btn active">درآمد / سود</button>
+                                <button type="button" id="expense-btn" class="expense-btn">هزینه</button>
+                            </div>
+                        </div>
+                         <div>
+                            <label for="category" class="block mb-2 font-semibold text-gray-700">دسته‌بندی</label>
+                            <select id="category" class="form-input"></select>
+                        </div>
+                        <div>
+                            <label for="description" class="block mb-2 font-semibold text-gray-700">شرح تراکنش</label>
+                            <input type="text" id="description" class="form-input" placeholder="مثال: تعویض ال‌سی‌دی آیفون ۱۳" required>
+                        </div>
+                        <div>
+                            <label for="amount" class="block mb-2 font-semibold text-gray-700">مبلغ (تومان)</label>
+                            <input type="number" id="amount" class="form-input" placeholder="مثال: 1500000" required min="0">
+                        </div>
+                        <div>
+                            <label for="date-picker" class="block mb-2 font-semibold text-gray-700">تاریخ</label>
+                            <input type="text" id="date-picker" class="form-input" autocomplete="off">
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="submit" id="submit-btn" class="btn btn-primary w-full">افزودن</button>
+                            <button type="button" id="cancel-btn" class="btn btn-secondary w-full hidden">انصراف</button>
+                        </div>
+                    </form>
+                </div>
 
-        <!-- Accounting Page: Unsettled View -->
-        <div id="accounting-page" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h1 id="partner-title" class="text-3xl font-bold text-gray-800"></h1>
-                <div class="space-x-2 space-x-reverse">
-                    <button id="view-settled-button" class="btn btn-info">مشاهده تسویه شده‌ها</button>
-                    <button id="back-button" class="btn btn-secondary">بازگشت</button>
+                <div class="card">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold">خلاصه روز (<span id="summary-date-display"></span>)</h2>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center"><span class="font-semibold text-gray-600">جمع درآمد:</span><span id="total-income" class="font-bold text-lg income">۰ تومان</span></div>
+                        <div class="flex justify-between items-center"><span class="font-semibold text-gray-600">جمع هزینه‌ها:</span><span id="total-expense" class="font-bold text-lg expense">۰ تومان</span></div>
+                        <hr>
+                        <div class="flex justify-between items-center"><span class="font-bold text-gray-800 text-lg">سود/زیان خالص:</span><span id="net-profit" class="font-bold text-xl">۰ تومان</span></div>
+                    </div>
                 </div>
             </div>
-            
-            <form id="accounting-form" class="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-                <div><label for="service-type" class="block mb-2 font-semibold text-gray-700">نوع کار</label><select id="service-type" class="form-select w-full"><option value="Wipe">Wipe</option><option value="FRP">FRP</option><option value="Wipe FRP">Wipe FRP</option><option value="Apple ID">Apple ID</option></select></div>
-                <div><label for="partner-name" class="block mb-2 font-semibold text-gray-700">همکار</label><input type="text" id="partner-name" class="form-input w-full bg-gray-200" readonly></div>
-                <div><label for="phone-model" class="block mb-2 font-semibold text-gray-700">مدل گوشی</label><input type="text" id="phone-model" class="form-input w-full" required></div>
-                <div><label for="record-date" class="block mb-2 font-semibold text-gray-700">تاریخ</label><input type="text" id="record-date" class="form-input w-full" required></div>
-                <div><label for="price" class="block mb-2 font-semibold text-gray-700">قیمت (تومان)</label><input type="number" id="price" class="form-input w-full" required></div>
-                <div class="md:col-span-2 lg:col-span-1"><button type="submit" class="btn btn-primary w-full">ثبت رکورد</button></div>
-            </form>
 
-            <div id="total-sum-container" class="bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-lg mb-6" role="alert"><p class="font-bold text-lg">مجموع حساب تسویه نشده: <span id="total-sum">0</span> تومان</p></div>
-            
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">سوابق تسویه نشده</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white rounded-lg shadow overflow-hidden">
-                    <thead class="bg-gray-800 text-white"><tr><th class="py-3 px-4 text-right">نوع کار</th><th class="py-3 px-4 text-right">مدل گوشی</th><th class="py-3 px-4 text-right">تاریخ</th><th class="py-3 px-4 text-right">قیمت (تومان)</th><th class="py-3 px-4 text-center">عملیات</th></tr></thead>
-                    <tbody id="records-table-body" class="text-gray-700"></tbody>
-                </table>
-            </div>
-            <div class="mt-6 text-center"><button id="copy-button" class="btn bg-indigo-600 text-white hover:bg-indigo-700">کپی گزارش تسویه نشده</button></div>
-        </div>
-        
-        <!-- Settled Records Page -->
-        <div id="settled-page" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h1 id="settled-partner-title" class="text-3xl font-bold text-gray-800"></h1>
-                <button id="back-to-unsettled-button" class="btn btn-secondary">بازگشت به حسابداری</button>
-            </div>
-            
-            <div id="settled-sum-container" class="bg-green-100 border-l-4 border-green-500 text-green-800 p-4 rounded-lg mb-6" role="alert"><p class="font-bold text-lg">مجموع حساب تسویه شده: <span id="settled-sum">0</span> تومان</p></div>
+            <div class="lg:col-span-2 space-y-8">
+                <div class="card">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">لیست تراکنش‌های روز</h2>
+                    <div id="transaction-list" class="space-y-3 max-h-[30rem] overflow-y-auto pr-2">
+                         <p class="text-gray-500 text-center py-4">هنوز تراکنشی برای این روز ثبت نشده است.</p>
+                    </div>
+                </div>
 
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">سوابق تسویه شده</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white rounded-lg shadow overflow-hidden">
-                    <thead class="bg-gray-600 text-white"><tr><th class="py-3 px-4 text-right">نوع کار</th><th class="py-3 px-4 text-right">مدل گوشی</th><th class="py-3 px-4 text-right">تاریخ</th><th class="py-3 px-4 text-right">قیمت (تومان)</th><th class="py-3 px-4 text-center">عملیات</th></tr></thead>
-                    <tbody id="settled-records-table-body" class="text-gray-700"></tbody>
-                </table>
+                <div class="card">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">تحلیل کلی (۷ روز گذشته)</h2>
+                    <canvas id="myChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/kamadatepicker/dist/kamadatepicker.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const transactionForm = document.getElementById('transaction-form');
+            const formTitle = document.getElementById('form-title');
+            const descriptionInput = document.getElementById('description');
+            const amountInput = document.getElementById('amount');
+            const datePickerEl = document.getElementById('date-picker');
+            const transactionList = document.getElementById('transaction-list');
+            const totalIncomeEl = document.getElementById('total-income');
+            const totalExpenseEl = document.getElementById('total-expense');
+            const netProfitEl = document.getElementById('net-profit');
+            const chartCanvas = document.getElementById('myChart');
+            const incomeBtn = document.getElementById('income-btn');
+            const expenseBtn = document.getElementById('expense-btn');
+            const categorySelect = document.getElementById('category');
+            const transactionIdInput = document.getElementById('transaction-id');
+            const submitBtn = document.getElementById('submit-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const summaryDateDisplay = document.getElementById('summary-date-display');
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-
-        let db, auth, userId;
-        let currentPartnerKey = null;
-        let currentPartnerName = '';
-        let unsubscribe;
-
-        const loadingSpinner = $('#loading-spinner');
-        const mainPage = $('#main-page');
-        const accountingPage = $('#accounting-page');
-        const settledPage = $('#settled-page');
-        const partnerTitle = $('#partner-title');
-        const settledPartnerTitle = $('#settled-partner-title');
-        const form = $('#accounting-form');
-        const partnerNameInput = $('#partner-name');
-        const recordsTableBody = $('#records-table-body');
-        const settledRecordsTableBody = $('#settled-records-table-body');
-        const dateInput = $('#record-date');
-        const totalSumEl = $('#total-sum');
-        const settledSumEl = $('#settled-sum');
-        const copyButton = $('#copy-button');
-        
-        $(document).ready(function() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        if (!userId) {
-                            userId = user.uid;
-                            console.log("Authentication successful. User ID:", userId);
-                            initializeUI();
-                            setupEventListeners();
-                            loadingSpinner.hide();
-                            mainPage.removeClass('hidden');
-                        }
-                    } else {
-                        const signIn = async () => {
-                            try {
-                                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                    await signInWithCustomToken(auth, __initial_auth_token);
-                                } else {
-                                    await signInAnonymously(auth);
-                                }
-                            } catch (error) {
-                                console.error("Sign-in failed:", error);
-                                loadingSpinner.html('<p class="text-red-500">خطا در ورود به سیستم. لطفاً صفحه را رفرش کنید.</p>');
-                            }
-                        };
-                        signIn();
-                    }
-                });
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                loadingSpinner.html('<p class="text-red-500">خطا در اتصال به سرور. لطفاً از اتصال اینترنت خود اطمینان حاصل کرده و صفحه را رفرش کنید.</p>');
-            }
-        });
-
-        function initializeUI() {
-            dateInput.persianDatepicker({
-                format: 'YYYY/MM/DD',
-                autoClose: true,
-                initialValue: false,
-                observer: true,
-                initialValueType: 'persian'
-            });
-        }
-
-        function showAccountingPage(name, key) {
-            currentPartnerKey = key;
-            currentPartnerName = name;
-            mainPage.addClass('hidden');
-            accountingPage.removeClass('hidden');
-            settledPage.addClass('hidden');
-            partnerTitle.text(`حسابداری: ${name}`);
-            partnerNameInput.val(name);
-            dateInput.persianDatepicker('setDate', new persianDate());
-            listenForRecords();
-        }
-
-        function showMainPage() {
-            if (unsubscribe) unsubscribe();
-            currentPartnerKey = null;
-            currentPartnerName = '';
-            mainPage.removeClass('hidden');
-            accountingPage.addClass('hidden');
-            settledPage.addClass('hidden');
-        }
-        
-        function showSettledPage() {
-            accountingPage.addClass('hidden');
-            settledPage.removeClass('hidden');
-            settledPartnerTitle.text(`تسویه شده‌های: ${currentPartnerName}`);
-        }
-
-        function listenForRecords() {
-            if (!userId || !currentPartnerKey) return;
-            if (unsubscribe) unsubscribe();
-
-            const recordsCollection = collection(db, 'artifacts', appId, 'users', userId, currentPartnerKey);
-            const q = query(recordsCollection);
-
-            unsubscribe = onSnapshot(q, (querySnapshot) => {
-                const unsettledRecords = [];
-                const settledRecords = [];
-                querySnapshot.forEach((doc) => {
-                    const record = { id: doc.id, ...doc.data() };
-                    if (record.isSettled) {
-                        settledRecords.push(record);
-                    } else {
-                        unsettledRecords.push(record);
-                    }
-                });
-                renderUnsettledTable(unsettledRecords);
-                renderSettledTable(settledRecords);
-            }, (error) => {
-                console.error("Error listening to records:", error);
-            });
-        }
-
-        function renderUnsettledTable(unsettled) {
-            recordsTableBody.empty();
-            const unsettledSum = unsettled.reduce((sum, record) => sum + Number(record.price || 0), 0);
-            totalSumEl.text(unsettledSum.toLocaleString('fa-IR'));
-            copyButton.prop('disabled', unsettled.length === 0);
-
-            if (unsettled.length === 0) {
-                recordsTableBody.append('<tr><td colspan="5" class="text-center p-6 text-gray-500">هیچ رکوردی برای تسویه وجود ندارد.</td></tr>');
-            } else {
-                 unsettled.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
-                 unsettled.forEach(record => {
-                    const formattedPrice = Number(record.price).toLocaleString('fa-IR');
-                    const row = `
-                        <tr class="border-b hover:bg-gray-100">
-                            <td class="py-3 px-4">${record.service}</td>
-                            <td class="py-3 px-4">${record.model}</td>
-                            <td class="py-3 px-4">${record.date}</td>
-                            <td class="py-3 px-4">${formattedPrice}</td>
-                            <td class="py-3 px-4 text-center space-x-2 space-x-reverse">
-                                <button onclick="window.settleRecord('${record.id}')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600">تسویه شد</button>
-                                <button onclick="window.deleteRecord('${record.id}')" class="btn btn-sm bg-red-500 text-white hover:bg-red-600">حذف</button>
-                            </td>
-                        </tr>`;
-                    recordsTableBody.append(row);
-                });
-            }
-        }
-
-        function renderSettledTable(settled) {
-            settledRecordsTableBody.empty();
-            const settledSum = settled.reduce((sum, record) => sum + Number(record.price || 0), 0);
-            settledSumEl.text(settledSum.toLocaleString('fa-IR'));
+            // App State
+            let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+            let myChart;
+            let selectedType = 'income';
+            let editMode = false;
             
-            if (settled.length === 0) {
-                settledRecordsTableBody.append('<tr><td colspan="5" class="text-center p-6 text-gray-500">هیچ رکوردی تسویه نشده است.</td></tr>');
-            } else {
-                settled.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
-                settled.forEach(record => {
-                    const formattedPrice = Number(record.price).toLocaleString('fa-IR');
-                    const row = `
-                        <tr class="border-b hover:bg-gray-50 bg-green-50">
-                            <td class="py-3 px-4">${record.service}</td>
-                            <td class="py-3 px-4">${record.model}</td>
-                            <td class="py-3 px-4">${record.date}</td>
-                            <td class="py-3 px-4">${formattedPrice}</td>
-                            <td class="py-3 px-4 text-center space-x-2 space-x-reverse">
-                                <button onclick="window.unsettleRecord('${record.id}')" class="btn btn-sm bg-yellow-500 text-white hover:bg-yellow-600">لغو تسویه</button>
-                                <button onclick="window.deleteRecord('${record.id}')" class="btn btn-sm bg-red-500 text-white hover:bg-red-600">حذف</button>
-                            </td>
-                        </tr>`;
-                    settledRecordsTableBody.append(row);
+            const incomeCategories = ['تعمیرات نرم‌افزاری', 'تعویض قطعه', 'فروش لوازم جانبی', 'سایر درآمدها'];
+            const expenseCategories = ['خرید قطعات', 'اجاره مغازه', 'قبوض', 'هزینه تبلیغات', 'ایاب و ذهاب', 'سایر هزینه‌ها'];
+
+            // --- UTILITY FUNCTIONS ---
+            const formatCurrency = (num) => new Intl.NumberFormat('fa-IR').format(num) + ' تومان';
+            const toPersianDate = (dateStr) => new Date(dateStr).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            // --- CATEGORY & TYPE HANDLING ---
+            const updateCategoryOptions = () => {
+                categorySelect.innerHTML = '';
+                const categories = selectedType === 'income' ? incomeCategories : expenseCategories;
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    categorySelect.appendChild(option);
                 });
-            }
-        }
+            };
 
-        async function addRecord(record) {
-            if (!userId || !currentPartnerKey) return;
-            try {
-                const recordsCollection = collection(db, 'artifacts', appId, 'users', userId, currentPartnerKey);
-                await addDoc(recordsCollection, record);
-            } catch (e) {
-                console.error("Error adding document: ", e);
-            }
-        }
+            const setTransactionType = (type) => {
+                selectedType = type;
+                incomeBtn.classList.toggle('active', type === 'income');
+                expenseBtn.classList.toggle('active', type === 'expense');
+                updateCategoryOptions();
+            };
 
-        window.deleteRecord = async function(docId) {
-            if (!confirm('آیا از حذف این رکورد مطمئن هستید؟')) return;
-            if (!userId || !currentPartnerKey || !docId) return;
-            try {
-                const recordDoc = doc(db, 'artifacts', appId, 'users', userId, currentPartnerKey, docId);
-                await deleteDoc(recordDoc);
-            } catch (e) {
-                console.error("Error deleting document: ", e);
-            }
-        }
-        
-        window.settleRecord = async function(docId) {
-            if (!userId || !currentPartnerKey || !docId) return;
-            try {
-                const recordDoc = doc(db, 'artifacts', appId, 'users', userId, currentPartnerKey, docId);
-                await updateDoc(recordDoc, { isSettled: true });
-            } catch (e) {
-                console.error("Error settling document: ", e);
-            }
-        }
+            // --- UI & RENDER FUNCTIONS ---
+            const renderTransactions = (date) => {
+                const dailyTransactions = transactions.filter(t => t.date === date).sort((a,b) => b.createdAt - a.createdAt);
+                transactionList.innerHTML = '';
 
-        window.unsettleRecord = async function(docId) {
-            if (!userId || !currentPartnerKey || !docId) return;
-            try {
-                const recordDoc = doc(db, 'artifacts', appId, 'users', userId, currentPartnerKey, docId);
-                await updateDoc(recordDoc, { isSettled: false });
-            } catch (e) {
-                console.error("Error unsettling document: ", e);
-            }
-        }
+                if (dailyTransactions.length === 0) {
+                    transactionList.innerHTML = '<p class="text-gray-500 text-center py-4">هنوز تراکنشی برای این روز ثبت نشده است.</p>';
+                } else {
+                    dailyTransactions.forEach(t => {
+                        const item = document.createElement('div');
+                        const amountClass = t.type === 'income' ? 'income' : 'expense';
+                        const sign = t.type === 'income' ? '+' : '-';
+                        item.className = `flex items-center p-3 rounded-lg ${t.type === 'income' ? 'bg-green-50' : 'bg-red-50'}`;
+                        item.innerHTML = `
+                            <div class="flex-grow">
+                                <p class="font-semibold text-gray-800">${t.description}</p>
+                                <p class="text-sm text-gray-500">${t.category}</p>
+                            </div>
+                            <div class="text-left ml-4">
+                                <p class="text-md ${amountClass} font-bold">${sign}${formatCurrency(t.amount)}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="startEditTransaction('${t.id}')" class="btn btn-edit text-xs py-1 px-2">ویرایش</button>
+                                <button onclick="deleteTransaction('${t.id}')" class="btn btn-danger text-xs py-1 px-2">حذف</button>
+                            </div>
+                        `;
+                        transactionList.appendChild(item);
+                    });
+                }
+                updateSummary(date);
+                updateChart();
+            };
 
-        function setupEventListeners() {
-            $('.partner-card').on('click', function() {
-                showAccountingPage($(this).data('name'), $(this).data('key'));
-            });
+            const updateSummary = (date) => {
+                const dailyTransactions = transactions.filter(t => t.date === date);
+                const income = dailyTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+                const expense = dailyTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+                const netProfit = income - expense;
 
-            $('#back-button').on('click', showMainPage);
-            $('#view-settled-button').on('click', showSettledPage);
-            $('#back-to-unsettled-button').on('click', function() {
-                showAccountingPage(currentPartnerName, currentPartnerKey);
-            });
+                summaryDateDisplay.textContent = toPersianDate(date);
+                totalIncomeEl.textContent = formatCurrency(income);
+                totalExpenseEl.textContent = formatCurrency(expense);
+                netProfitEl.textContent = formatCurrency(netProfit);
 
-            form.on('submit', async function(e) {
-                e.preventDefault();
-                const newRecord = {
-                    service: $('#service-type').val(),
-                    model: $('#phone-model').val(),
-                    date: dateInput.val(),
-                    price: $('#price').val(),
-                    createdAt: new Date(),
-                    isSettled: false
+                netProfitEl.classList.remove('income', 'expense', 'text-gray-800');
+                if (netProfit > 0) netProfitEl.classList.add('income');
+                else if (netProfit < 0) netProfitEl.classList.add('expense');
+                else netProfitEl.classList.add('text-gray-800');
+            };
+
+            const updateChart = () => {
+                const dates = [];
+                const netProfits = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dateStr = d.toISOString().split('T')[0];
+                    const dailyNet = transactions.filter(t => t.date === dateStr).reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
+                    dates.push(new Date(dateStr).toLocaleDateString('fa-IR', { weekday: 'short', day: 'numeric' }));
+                    netProfits.push(dailyNet);
+                }
+
+                const chartData = {
+                    labels: dates,
+                    datasets: [{
+                        label: 'سود/زیان خالص',
+                        data: netProfits,
+                        backgroundColor: netProfits.map(p => p >= 0 ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)'),
+                        borderColor: netProfits.map(p => p >= 0 ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)'),
+                        borderWidth: 1,
+                        borderRadius: 5,
+                    }]
                 };
-                await addRecord(newRecord);
-                this.reset();
-                dateInput.persianDatepicker('setDate', new persianDate());
-            });
 
-            copyButton.on('click', function() {
-                const partnerName = partnerNameInput.val();
-                let reportText = `گزارش حساب های تسویه نشده: ${partnerName}\n\n`;
-                let totalSum = 0;
-
-                const recordsCollection = collection(db, 'artifacts', appId, 'users', userId, currentPartnerKey);
-                 onSnapshot(query(recordsCollection), (querySnapshot) => {
-                    const unsettledRecords = [];
-                    querySnapshot.forEach((doc) => {
-                        const record = { id: doc.id, ...doc.data() };
-                        if (!record.isSettled) {
-                            unsettledRecords.push(record);
+                if (myChart) {
+                    myChart.data = chartData;
+                    myChart.update();
+                } else {
+                    myChart = new Chart(chartCanvas, {
+                        type: 'bar',
+                        data: chartData,
+                        options: {
+                            responsive: true,
+                            scales: { y: { ticks: { callback: (value) => new Intl.NumberFormat('fa-IR').format(value) } } },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { callbacks: { label: (context) => formatCurrency(context.parsed.y) } }
+                            }
                         }
                     });
+                }
+            };
 
-                    unsettledRecords.forEach(record => {
-                        const formattedPrice = Number(record.price).toLocaleString('fa-IR');
-                        totalSum += Number(record.price);
-                        reportText += `- کار: ${record.service}, مدل: ${record.model}, تاریخ: ${record.date}, قیمت: ${formattedPrice} تومان\n`;
+            // --- CRUD & FORM LOGIC ---
+            const handleFormSubmit = (e) => {
+                e.preventDefault();
+                if (descriptionInput.value.trim() === '' || amountInput.value.trim() === '') return;
+
+                const transactionData = {
+                    description: descriptionInput.value,
+                    amount: +amountInput.value,
+                    type: selectedType,
+                    category: categorySelect.value,
+                    date: datePickerEl.value,
+                };
+
+                if (editMode) {
+                    const id = transactionIdInput.value;
+                    const index = transactions.findIndex(t => t.id === id);
+                    if (index > -1) {
+                        transactions[index] = { ...transactions[index], ...transactionData };
+                    }
+                } else {
+                    transactions.push({
+                        ...transactionData,
+                        id: crypto.randomUUID(),
+                        createdAt: Date.now()
                     });
+                }
+                
+                saveToLocalStorage();
+                renderTransactions(datePickerEl.value);
+                resetForm();
+            };
 
-                    if (totalSum === 0) {
-                        reportText += "هیچ حساب تسویه نشده ای وجود ندارد.";
-                    }
+            window.startEditTransaction = (id) => {
+                const transaction = transactions.find(t => t.id === id);
+                if (!transaction) return;
 
-                    reportText += `\n--------------------\n`;
-                    reportText += `مجموع کل تسویه نشده: ${totalSum.toLocaleString('fa-IR')} تومان`;
+                editMode = true;
+                transactionIdInput.value = transaction.id;
+                descriptionInput.value = transaction.description;
+                amountInput.value = transaction.amount;
+                datePickerEl.value = transaction.date;
+                window.kamadatepicker.sync(); // Sync date picker UI
+                
+                setTransactionType(transaction.type);
+                categorySelect.value = transaction.category;
+                
+                formTitle.textContent = 'ویرایش تراکنش';
+                submitBtn.textContent = 'ذخیره تغییرات';
+                cancelBtn.classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+            
+            const resetForm = () => {
+                editMode = false;
+                transactionForm.reset();
+                transactionIdInput.value = '';
+                formTitle.textContent = 'ثبت تراکنش جدید';
+                submitBtn.textContent = 'افزودن';
+                cancelBtn.classList.add('hidden');
+                setTransactionType('income'); // Reset to default
+                datePickerEl.value = window.kamadatepicker.getValue('Y-m-d'); // Reset date to today
+            };
 
-                    const textArea = document.createElement("textarea");
-                    textArea.value = reportText;
-                    textArea.style.position = "fixed";
-                    textArea.style.top = "0";
-                    textArea.style.left = "0";
-                    textArea.style.opacity = "0";
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    try {
-                        document.execCommand('copy');
-                        const originalText = copyButton.text();
-                        copyButton.text('کپی شد!').prop('disabled', true);
-                        setTimeout(() => {
-                            copyButton.text(originalText).prop('disabled', false);
-                        }, 2000);
-                    } catch (err) {
-                        console.error('خطا در کپی کردن متن: ', err);
-                    }
-                    document.body.removeChild(textArea);
-                });
+            window.deleteTransaction = (id) => {
+                if (confirm('آیا از حذف این تراکنش مطمئن هستید؟')) {
+                    transactions = transactions.filter(t => t.id !== id);
+                    saveToLocalStorage();
+                    renderTransactions(datePickerEl.value);
+                }
+            };
+            
+            const saveToLocalStorage = () => {
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+            };
+
+            // --- INITIALIZATION ---
+            // Initialize Date Picker
+            window.kamadatepicker = kamadatepicker('date-picker', {
+                buttonsColor: "blue",
+                forceFarsiDigits: true,
+                gotoToday: true,
+                // When date changes, re-render the list
+                onclose: () => renderTransactions(datePickerEl.value)
             });
-        }
+            
+            // Set the input's value to today right after initialization
+            datePickerEl.value = window.kamadatepicker.getValue('Y-m-d');
+
+            // Set up event listeners
+            transactionForm.addEventListener('submit', handleFormSubmit);
+            incomeBtn.addEventListener('click', () => setTransactionType('income'));
+            expenseBtn.addEventListener('click', () => setTransactionType('expense'));
+            cancelBtn.addEventListener('click', resetForm);
+            
+            // Initial render
+            setTransactionType('income');
+            renderTransactions(datePickerEl.value);
+        });
     </script>
 </body>
 </html>
